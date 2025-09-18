@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import requests
 import os
 from google.cloud import logging as cloud_logging
@@ -80,6 +80,33 @@ def forest_area():
             },
             severity="ERROR",
         )
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/gbif_occurrences')
+def gbif_occurrences():
+    # Get country code from request arguments, default to Togo (TG)
+    country_code = request.args.get('country', 'TG')
+
+    # GBIF API URL for occurrences
+    url = f"https://api.gbif.org/v1/occurrence/search?country={country_code}&limit=5"
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+
+        if data and data['results']:
+            # Clean and format the data
+            formatted_data = []
+            for entry in data['results']:
+                formatted_data.append({
+                    'species': entry.get('scientificName', 'N/A'),
+                    'url': f"https://www.gbif.org/occurrence/{entry['key']}"
+                })
+            return jsonify(formatted_data)
+        else:
+            return jsonify({"error": "No data found for the selected criteria."}), 404
+
+    except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

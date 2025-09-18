@@ -14,6 +14,10 @@ This project is a web application designed to promote environmental protection a
 
 This application integrates with the World Bank API to fetch and display data on environmental indicators. Currently, it displays the forest area percentage for Brazil, Indonesia, and the Democratic Republic of Congo.
 
+## GBIF API Integration
+
+This application also integrates with the Global Biodiversity Information Facility (GBIF) API to fetch and display species occurrence data. Users can search for the 5 most recent occurrences in any country by providing a 2-letter country code. By default, it displays the data for Togo.
+
 ## Usage
 
 To run this project locally, you will need to have Python and Flask installed.

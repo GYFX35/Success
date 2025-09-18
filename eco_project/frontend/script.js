@@ -3,9 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     const chatWindow = document.getElementById('chat-window');
     const worldBankDataContainer = document.getElementById('world-bank-data');
+    const gbifOccurrencesContainer = document.getElementById('gbif-occurrences');
+    const countryCodeInput = document.getElementById('country-code-input');
+    const searchGbifBtn = document.getElementById('search-gbif-btn');
 
     // Fetch and display World Bank data on page load
     fetchWorldBankData();
+    // Fetch and display GBIF data for Togo on page load
+    fetchGbifData('TG');
 
     sendBtn.addEventListener('click', () => {
         const userInput = chatInput.value;
@@ -17,6 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 appendMessage('AI: You said "' + userInput + '"');
             }, 500);
+        }
+    });
+
+    searchGbifBtn.addEventListener('click', () => {
+        const countryCode = countryCodeInput.value.trim().toUpperCase();
+        if (countryCode) {
+            fetchGbifData(countryCode);
         }
     });
 
@@ -50,6 +62,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             worldBankDataContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
+        }
+    }
+
+    async function fetchGbifData(countryCode) {
+        try {
+            const response = await fetch(`/api/gbif_occurrences?country=${countryCode}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.error) {
+                gbifOccurrencesContainer.innerHTML = `<p>Error fetching data: ${data.error}</p>`;
+                return;
+            }
+
+            let html = '<ul>';
+            data.forEach(item => {
+                html += `<li><a href="${item.url}" target="_blank">${item.species}</a></li>`;
+            });
+            html += '</ul>';
+
+            gbifOccurrencesContainer.innerHTML = html;
+
+        } catch (error) {
+            gbifOccurrencesContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
         }
     }
 });
