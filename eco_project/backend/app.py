@@ -36,5 +36,29 @@ def forest_area():
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/gbif_occurrences')
+def gbif_occurrences():
+    # GBIF API URL for occurrences in Togo
+    url = "https://api.gbif.org/v1/occurrence/search?country=TG&limit=5"
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+
+        if data and data['results']:
+            # Clean and format the data
+            formatted_data = []
+            for entry in data['results']:
+                formatted_data.append({
+                    'species': entry.get('scientificName', 'N/A'),
+                    'url': f"https://www.gbif.org/occurrence/{entry['key']}"
+                })
+            return jsonify(formatted_data)
+        else:
+            return jsonify({"error": "No data found for the selected criteria."}), 404
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)
