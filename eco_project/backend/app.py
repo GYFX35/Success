@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import requests
 
 app = Flask(__name__)
@@ -38,8 +38,11 @@ def forest_area():
 
 @app.route('/api/gbif_occurrences')
 def gbif_occurrences():
-    # GBIF API URL for occurrences in Togo
-    url = "https://api.gbif.org/v1/occurrence/search?country=TG&limit=5"
+    # Get country code from request arguments, default to Togo (TG)
+    country_code = request.args.get('country', 'TG')
+
+    # GBIF API URL for occurrences
+    url = f"https://api.gbif.org/v1/occurrence/search?country={country_code}&limit=5"
 
     try:
         response = requests.get(url)

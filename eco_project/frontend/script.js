@@ -4,11 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatWindow = document.getElementById('chat-window');
     const worldBankDataContainer = document.getElementById('world-bank-data');
     const gbifOccurrencesContainer = document.getElementById('gbif-occurrences');
+    const countryCodeInput = document.getElementById('country-code-input');
+    const searchGbifBtn = document.getElementById('search-gbif-btn');
 
     // Fetch and display World Bank data on page load
     fetchWorldBankData();
-    // Fetch and display GBIF data on page load
-    fetchGbifData();
+    // Fetch and display GBIF data for Togo on page load
+    fetchGbifData('TG');
 
     sendBtn.addEventListener('click', () => {
         const userInput = chatInput.value;
@@ -20,6 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 appendMessage('AI: You said "' + userInput + '"');
             }, 500);
+        }
+    });
+
+    searchGbifBtn.addEventListener('click', () => {
+        const countryCode = countryCodeInput.value.trim().toUpperCase();
+        if (countryCode) {
+            fetchGbifData(countryCode);
         }
     });
 
@@ -56,9 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function fetchGbifData() {
+    async function fetchGbifData(countryCode) {
         try {
-            const response = await fetch('/api/gbif_occurrences');
+            const response = await fetch(`/api/gbif_occurrences?country=${countryCode}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }

@@ -16,7 +16,7 @@ This application integrates with the World Bank API to fetch and display data on
 
 ## GBIF API Integration
 
-This application also integrates with the Global Biodiversity Information Facility (GBIF) API to fetch and display species occurrence data. Currently, it displays the 5 most recent occurrences in Togo.
+This application also integrates with the Global Biodiversity Information Facility (GBIF) API to fetch and display species occurrence data. Users can search for the 5 most recent occurrences in any country by providing a 2-letter country code. By default, it displays the data for Togo.
 
 ## Usage
 
