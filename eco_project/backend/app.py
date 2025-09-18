@@ -1,11 +1,17 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 import requests
+import os
 
 app = Flask(__name__)
 
+# Path for frontend static files
+@app.route('/<path:path>')
+def send_static(path):
+    return send_from_directory('../frontend', path)
+
 @app.route('/')
 def home():
-    return "Welcome to the Environment Protection Software Backend!"
+    return send_from_directory('../frontend', 'index.html')
 
 @app.route('/api/forest_area')
 def forest_area():
@@ -29,6 +35,36 @@ def forest_area():
                     'year': entry['date'],
                     'value': entry['value']
                 })
+            return jsonify(formatted_data)
+        else:
+            return jsonify({"error": "No data found for the selected criteria."}), 404
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sdg_data')
+def sdg_data():
+    # UNDP API URL for SDG 15: Life on Land
+    url = "https://api.open.undp.org/api/target-data.json?sdg=15"
+    countries_of_interest = ["BRA", "IDN", "COD"]
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+
+        if data:
+            formatted_data = []
+            for target in data:
+                for recipient in target.get('top_recipients', []):
+                    if recipient.get('iso3') in countries_of_interest:
+                        formatted_data.append({
+                            'country': recipient.get('name'),
+                            'country_iso3_code': recipient.get('iso3'),
+                            'target_id': target.get('target_id'),
+                            'description': target.get('description'),
+                            'budget': recipient.get('total_budget'),
+                            'expense': recipient.get('total_expense')
+                        })
             return jsonify(formatted_data)
         else:
             return jsonify({"error": "No data found for the selected criteria."}), 404
