@@ -9,16 +9,32 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchWorldBankData();
     fetchEurostatData();
 
-    sendBtn.addEventListener('click', () => {
+    sendBtn.addEventListener('click', async () => {
         const userInput = chatInput.value;
         if (userInput) {
             appendMessage('You: ' + userInput);
             chatInput.value = '';
 
-            // Placeholder for AI response
-            setTimeout(() => {
-                appendMessage('AI: You said "' + userInput + '"');
-            }, 500);
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: userInput })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                appendMessage('AI: ' + data.response);
+
+            } catch (error) {
+                appendMessage('AI: Sorry, something went wrong. Please try again later.');
+                console.error('Fetch error:', error);
+            }
         }
     });
 
