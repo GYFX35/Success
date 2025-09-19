@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, send_from_directory
 import requests
 import os
 from google.cloud import logging as cloud_logging
@@ -11,18 +11,15 @@ log_name = "world-bank-api-logs"
 # Selects the log to write to
 logger = logging_client.logger(log_name)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 @app.route('/')
 def home():
-    logger.log_struct(
-        {
-            "message": "Home endpoint was accessed.",
-            "component": "backend",
-            "endpoint": "/",
-        }
-    )
-    return "Welcome to the Environment Protection Software Backend!"
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/<path:path>')
+def send_static(path):
+    return send_from_directory(app.static_folder, path)
 
 @app.route('/api/forest_area')
 def forest_area():
@@ -146,6 +143,36 @@ def eu_forest_area():
             severity="ERROR",
         )
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    data = request.get_json()
+    user_message = data.get('message')
+
+    if not user_message:
+        return jsonify({"error": "No message provided."}), 400
+
+    # Rule-based chatbot logic
+    user_message_lower = user_message.lower()
+    ai_response = "I'm sorry, I don't understand. Can you rephrase?"
+
+    if 'environment' in user_message_lower or 'forest' in user_message_lower or 'agriculture' in user_message_lower:
+        ai_response = "Environmental protection is crucial for a sustainable future. We can discuss topics like reforestation, sustainable agriculture, and reducing pollution."
+    elif 'health' in user_message_lower or 'healthcare' in user_message_lower or 'doctor' in user_message_lower:
+        ai_response = "Access to quality healthcare is a fundamental human right. We can talk about public health initiatives, preventative care, and mental health awareness."
+
+    logger.log_struct(
+        {
+            "message": f"Chat message received: {user_message}",
+            "response": ai_response,
+            "component": "backend",
+            "endpoint": "/api/chat",
+        },
+        severity="INFO",
+    )
+
+    return jsonify({"response": ai_response})
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
