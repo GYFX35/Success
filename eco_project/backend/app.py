@@ -152,26 +152,47 @@ def chat():
     if not user_message:
         return jsonify({"error": "No message provided."}), 400
 
-    # Rule-based chatbot logic
-    user_message_lower = user_message.lower()
-    ai_response = "I'm sorry, I don't understand. Can you rephrase?"
+    # Get Ollama API URL from environment variable or use default
+    ollama_api_url = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api/generate")
 
-    if 'environment' in user_message_lower or 'forest' in user_message_lower or 'agriculture' in user_message_lower:
-        ai_response = "Environmental protection is crucial for a sustainable future. We can discuss topics like reforestation, sustainable agriculture, and reducing pollution."
-    elif 'health' in user_message_lower or 'healthcare' in user_message_lower or 'doctor' in user_message_lower:
-        ai_response = "Access to quality healthcare is a fundamental human right. We can talk about public health initiatives, preventative care, and mental health awareness."
+    try:
+        # Prepare the data for the Ollama API
+        ollama_data = {
+            "model": "gemma:2b",
+            "prompt": user_message,
+            "stream": False
+        }
 
-    logger.log_struct(
-        {
-            "message": f"Chat message received: {user_message}",
-            "response": ai_response,
-            "component": "backend",
-            "endpoint": "/api/chat",
-        },
-        severity="INFO",
-    )
+        # Send the request to the Ollama API
+        response = requests.post(ollama_api_url, json=ollama_data)
+        response.raise_for_status()  # Raise an exception for bad status codes
 
-    return jsonify({"response": ai_response})
+        # Extract the response from Ollama
+        ai_response = response.json().get('response', "I'm sorry, I couldn't generate a response.")
+
+        logger.log_struct(
+            {
+                "message": f"Chat message received: {user_message}",
+                "response": ai_response,
+                "component": "backend",
+                "endpoint": "/api/chat",
+            },
+            severity="INFO",
+        )
+
+        return jsonify({"response": ai_response})
+
+    except requests.exceptions.RequestException as e:
+        logger.log_struct(
+            {
+                "message": f"Error communicating with Ollama API: {e}",
+                "component": "backend",
+                "endpoint": "/api/chat",
+                "url": ollama_api_url,
+            },
+            severity="ERROR",
+        )
+        return jsonify({"error": "Failed to communicate with the AI service."}), 500
 
 
 if __name__ == '__main__':

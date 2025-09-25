@@ -3,6 +3,8 @@ services:
   backend:
     build: ./backend
     restart: always
+    environment:
+      - OLLAMA_API_URL=http://host.docker.internal:11434/api/generate
   frontend:
     build: ./frontend
     restart: always
