@@ -5,9 +5,9 @@ FROM nginx:1.21.3-alpine
 RUN apk update && apk add gettext
 
 # Copy static files
-COPY index.html /usr/share/nginx/html/
-COPY style.css /usr/share/nginx/html/
-COPY script.js /usr/share/nginx/html/
+COPY *.html /usr/share/nginx/html/
+COPY *.css /usr/share/nginx/html/
+COPY *.js /usr/share/nginx/html/
 
 # Copy Nginx config template
 COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
