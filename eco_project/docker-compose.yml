@@ -6,7 +6,9 @@ services:
     environment:
       - OLLAMA_API_URL=http://host.docker.internal:11434/api/generate
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     restart: always
     ports:
       - "8080:8080"

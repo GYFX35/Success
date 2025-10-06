@@ -1,15 +1,21 @@
 from flask import Flask, jsonify, request, send_from_directory
 import requests
 import os
-from google.cloud import logging as cloud_logging
 
-# Instantiates a client
-logging_client = cloud_logging.Client()
+# Mock logger for local development
+class MockLogger:
+    def log_struct(self, *args, **kwargs):
+        pass  # Does nothing
 
-# The name of the log to write to
-log_name = "world-bank-api-logs"
-# Selects the log to write to
-logger = logging_client.logger(log_name)
+# Conditionally initialize the logger
+if os.environ.get('GAE_ENV') == 'standard':
+    from google.cloud import logging as cloud_logging
+    logging_client = cloud_logging.Client()
+    log_name = "world-bank-api-logs"
+    logger = logging_client.logger(log_name)
+else:
+    # Use a mock logger in local/non-GAE environments
+    logger = MockLogger()
 
 app = Flask(__name__, static_folder='static')
 
@@ -138,6 +144,66 @@ def eu_forest_area():
                 "message": f"Error fetching data from Eurostat API: {e}",
                 "component": "backend",
                 "endpoint": "/api/eu_forest_area",
+                "url": url,
+            },
+            severity="ERROR",
+        )
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/agricultural_land')
+def agricultural_land():
+    # World Bank API URL for agricultural land (% of land area) for Brazil, Indonesia, and Congo
+    # Indicator: AG.LND.AGRI.ZS
+    # Countries: BRA (Brazil), IDN (Indonesia), COD (Congo, Dem. Rep.)
+    url = "https://api.worldbank.org/v2/country/BRA;IDN;COD/indicator/AG.LND.AGRI.ZS?format=json&date=2020"
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+
+        # The API returns a list. The first element contains metadata, the second contains the data.
+        if len(data) > 1 and data[1]:
+            # Clean and format the data
+            formatted_data = []
+            for entry in data[1]:
+                formatted_data.append({
+                    'country': entry['country']['value'],
+                    'country_iso3_code': entry['countryiso3code'],
+                    'year': entry['date'],
+                    'value': entry['value']
+                })
+
+            # Log the successful data fetch
+            logger.log_struct(
+                {
+                    "message": "Successfully fetched agricultural land data.",
+                    "component": "backend",
+                    "endpoint": "/api/agricultural_land",
+                },
+                severity="INFO",
+            )
+
+            return jsonify(formatted_data)
+        else:
+            # Log that no data was found
+            logger.log_struct(
+                {
+                    "message": "No data found for the selected criteria.",
+                    "component": "backend",
+                    "endpoint": "/api/agricultural_land",
+                    "url": url,
+                },
+                severity="WARNING",
+            )
+            return jsonify({"error": "No data found for the selected criteria."}), 404
+
+    except requests.exceptions.RequestException as e:
+        # Log the error
+        logger.log_struct(
+            {
+                "message": f"Error fetching data from World Bank API: {e}",
+                "component": "backend",
+                "endpoint": "/api/agricultural_land",
                 "url": url,
             },
             severity="ERROR",
