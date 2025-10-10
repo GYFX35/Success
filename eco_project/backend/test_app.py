@@ -68,5 +68,14 @@ class ChildMortalityTestCase(unittest.TestCase):
         data = json.loads(response.get_data(as_text=True))
         self.assertEqual(data, {"error": "API is down"})
 
+    def test_livestock_endpoint(self):
+        response = self.app.get('/api/livestock')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIsInstance(data, list)
+        self.assertGreater(len(data), 0)
+        self.assertIn('country', data[0])
+        self.assertIn('value', data[0])
+
 if __name__ == '__main__':
     unittest.main()

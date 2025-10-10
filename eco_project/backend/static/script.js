@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const energyAccessDataContainer = document.getElementById('energy-access-data');
     const lifeExpectancyDataContainer = document.getElementById('life-expectancy-chart-container');
     const childMortalityDataContainer = document.getElementById('child-mortality-chart-container');
+    const livestockChartContainer = document.getElementById('livestockChart');
 
     // Fetch and display data on page load
     if (worldBankDataContainer) {
@@ -31,6 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (childMortalityDataContainer) {
         fetchChildMortalityData();
+    }
+    if (livestockChartContainer) {
+        fetchLivestockData();
     }
 
     if (sendBtn) {
@@ -300,6 +304,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             childMortalityDataContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
+        }
+    }
+
+    async function fetchLivestockData() {
+        try {
+            const response = await fetch('/api/livestock');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.error) {
+                livestockChartContainer.innerHTML = `<p>Error fetching data: ${data.error}</p>`;
+                return;
+            }
+
+            const chart = new Chart(livestockChartContainer, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.country),
+                    datasets: [{
+                        label: 'Livestock Population (in millions)',
+                        data: data.map(item => item.value),
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+        } catch (error) {
+            livestockChartContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
         }
     }
 });
