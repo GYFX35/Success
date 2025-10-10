@@ -502,6 +502,16 @@ def child_mortality():
         )
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/livestock')
+def livestock():
+    # This is a mocked endpoint due to the lack of a clear API for livestock data and an API key.
+    mock_data = [
+        {"country": "USA", "value": 94.4, "year": "2023"},
+        {"country": "Brazil", "value": 215.2, "year": "2023"},
+        {"country": "China", "value": 440.8, "year": "2023"},
+        {"country": "EU", "value": 142.3, "year": "2023"}
+    ]
+    return jsonify(mock_data)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
