@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const worldBankDataContainer = document.getElementById('world-bank-data');
     const eurostatDataContainer = document.getElementById('eurostat-data');
     const agriculturalLandDataContainer = document.getElementById('agricultural-land-data');
+    const drinkingWaterDataContainer = document.getElementById('drinking-water-data');
+    const energyAccessDataContainer = document.getElementById('energy-access-data');
 
     // Fetch and display data on page load
     if (worldBankDataContainer) {
@@ -15,6 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (agriculturalLandDataContainer) {
         fetchAgriculturalLandData();
+    }
+    if (drinkingWaterDataContainer) {
+        fetchDrinkingWaterData();
+    }
+    if (energyAccessDataContainer) {
+        fetchEnergyAccessData();
     }
 
     if (sendBtn) {
@@ -130,6 +138,90 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             agriculturalLandDataContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
+        }
+    }
+
+    async function fetchDrinkingWaterData() {
+        try {
+            const response = await fetch('/api/drinking_water');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.error) {
+                drinkingWaterDataContainer.innerHTML = `<p>Error fetching data: ${data.error}</p>`;
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            drinkingWaterDataContainer.appendChild(canvas);
+
+            const chart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.country),
+                    datasets: [{
+                        label: 'Access to Safely Managed Drinking Water (%)',
+                        data: data.map(item => item.value),
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+        } catch (error) {
+            drinkingWaterDataContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
+        }
+    }
+
+    async function fetchEnergyAccessData() {
+        try {
+            const response = await fetch('/api/energy_access');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.error) {
+                energyAccessDataContainer.innerHTML = `<p>Error fetching data: ${data.error}</p>`;
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            energyAccessDataContainer.appendChild(canvas);
+
+            const chart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.country),
+                    datasets: [{
+                        label: 'Access to Electricity (%)',
+                        data: data.map(item => item.value),
+                        backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+        } catch (error) {
+            energyAccessDataContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
         }
     }
 });

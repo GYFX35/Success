@@ -260,6 +260,112 @@ def chat():
         )
         return jsonify({"error": "Failed to communicate with the AI service."}), 500
 
+@app.route('/api/drinking_water')
+def drinking_water():
+    # World Bank API URL for access to safely managed drinking water
+    # Indicator: SH.H2O.SMDW.ZS
+    # Countries: BRA (Brazil), IDN (Indonesia), COD (Congo, Dem. Rep.)
+    url = "https://api.worldbank.org/v2/country/BRA;IDN;COD/indicator/SH.H2O.SMDW.ZS?format=json&date=2020"
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+
+        if len(data) > 1 and data[1]:
+            formatted_data = []
+            for entry in data[1]:
+                formatted_data.append({
+                    'country': entry['country']['value'],
+                    'country_iso3_code': entry['countryiso3code'],
+                    'year': entry['date'],
+                    'value': entry['value']
+                })
+            logger.log_struct(
+                {
+                    "message": "Successfully fetched drinking water data.",
+                    "component": "backend",
+                    "endpoint": "/api/drinking_water",
+                },
+                severity="INFO",
+            )
+            return jsonify(formatted_data)
+        else:
+            logger.log_struct(
+                {
+                    "message": "No data found for the selected criteria.",
+                    "component": "backend",
+                    "endpoint": "/api/drinking_water",
+                    "url": url,
+                },
+                severity="WARNING",
+            )
+            return jsonify({"error": "No data found for the selected criteria."}), 404
+
+    except requests.exceptions.RequestException as e:
+        logger.log_struct(
+            {
+                "message": f"Error fetching data from World Bank API: {e}",
+                "component": "backend",
+                "endpoint": "/api/drinking_water",
+                "url": url,
+            },
+            severity="ERROR",
+        )
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/energy_access')
+def energy_access():
+    # World Bank API URL for access to electricity
+    # Indicator: EG.ELC.ACCS.ZS
+    # Countries: BRA (Brazil), IDN (Indonesia), COD (Congo, Dem. Rep.)
+    url = "https://api.worldbank.org/v2/country/BRA;IDN;COD/indicator/EG.ELC.ACCS.ZS?format=json&date=2020"
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+
+        if len(data) > 1 and data[1]:
+            formatted_data = []
+            for entry in data[1]:
+                formatted_data.append({
+                    'country': entry['country']['value'],
+                    'country_iso3_code': entry['countryiso3code'],
+                    'year': entry['date'],
+                    'value': entry['value']
+                })
+            logger.log_struct(
+                {
+                    "message": "Successfully fetched energy access data.",
+                    "component": "backend",
+                    "endpoint": "/api/energy_access",
+                },
+                severity="INFO",
+            )
+            return jsonify(formatted_data)
+        else:
+            logger.log_struct(
+                {
+                    "message": "No data found for the selected criteria.",
+                    "component": "backend",
+                    "endpoint": "/api/energy_access",
+                    "url": url,
+                },
+                severity="WARNING",
+            )
+            return jsonify({"error": "No data found for the selected criteria."}), 404
+
+    except requests.exceptions.RequestException as e:
+        logger.log_struct(
+            {
+                "message": f"Error fetching data from World Bank API: {e}",
+                "component": "backend",
+                "endpoint": "/api/energy_access",
+                "url": url,
+            },
+            severity="ERROR",
+        )
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
