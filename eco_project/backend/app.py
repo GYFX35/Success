@@ -106,14 +106,17 @@ def eu_forest_area():
             geo_categories = data.get('dimension', {}).get('geo', {}).get('category', {}).get('index', {})
 
             for country_code, index in geo_categories.items():
-                value = data['value'][index]
-                country_label = geo_labels.get(country_code, country_code) # Fallback to code if label not found
-                formatted_data.append({
-                    'country': country_label,
-                    'country_code': country_code,
-                    'year': '2020',
-                    'value': value
-                })
+                # The Eurostat API response may not contain a value for every country,
+                # so we need to check if the index exists in the 'value' object.
+                value = data.get('value', {}).get(str(index))
+                if value is not None:
+                    country_label = geo_labels.get(country_code, country_code) # Fallback to code if label not found
+                    formatted_data.append({
+                        'country': country_label,
+                        'country_code': country_code,
+                        'year': '2020',
+                        'value': value
+                    })
 
             # Log the successful data fetch
             logger.log_struct(
@@ -360,6 +363,94 @@ def energy_access():
                 "message": f"Error fetching data from World Bank API: {e}",
                 "component": "backend",
                 "endpoint": "/api/energy_access",
+                "url": url,
+            },
+            severity="ERROR",
+        )
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/life_expectancy')
+def life_expectancy():
+    # WHO OData API URL for Life expectancy at birth
+    # Indicator: WHOSIS_000001
+    url = "https://ghoapi.azureedge.net/api/WHOSIS_000001"
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        if data and data.get('value'):
+            formatted_data = []
+            # Filter for specific countries and latest year available for each
+            countries_of_interest = ["AFG", "ALB", "DZA"]
+            latest_data = {}
+
+            for record in data['value']:
+                if record.get('SpatialDimType') == 'COUNTRY' and record.get('SpatialDim') in countries_of_interest and record.get('Dim1') == 'BTSX':
+                    country = record['SpatialDim']
+                    year = record['TimeDim']
+                    value = record['NumericValue']
+
+                    if country not in latest_data or year > latest_data[country]['year']:
+                        latest_data[country] = {'year': year, 'value': value, 'country': country}
+
+            formatted_data = list(latest_data.values())
+
+            logger.log_struct(
+                {
+                    "message": "Successfully fetched life expectancy data.",
+                    "component": "backend",
+                    "endpoint": "/api/life_expectancy",
+                },
+                severity="INFO",
+            )
+            return jsonify(formatted_data)
+        else:
+            logger.log_struct(
+                {
+                    "message": "No data found for the selected criteria.",
+                    "component": "backend",
+                    "endpoint": "/api/life_expectancy",
+                    "url": url,
+                },
+                severity="WARNING",
+            )
+            return jsonify({"error": "No data found for the selected criteria."}), 404
+
+    except requests.exceptions.RequestException as e:
+        logger.log_struct(
+            {
+                "message": f"Error fetching data from WHO API: {e}",
+                "component": "backend",
+                "endpoint": "/api/life_expectancy",
+                "url": url,
+            },
+            severity="ERROR",
+        )
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/child_mortality')
+def child_mortality():
+    # UNICEF SDMX API URL for Child Mortality
+    # Dataflow: UNICEF,CME,1.0
+    # Countries: AFG (Afghanistan), ALB (Albania), DZA (Algeria)
+    url = "https://sdmx.data.unicef.org/ws/public/sdmxapi/rest/data/UNICEF,CME,1.0/AFG+ALB+DZA?format=sdmx-json&human=true"
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        return jsonify(data)
+
+    except requests.exceptions.RequestException as e:
+        logger.log_struct(
+            {
+                "message": f"Error fetching data from UNICEF API: {e}",
+                "component": "backend",
+                "endpoint": "/api/child_mortality",
                 "url": url,
             },
             severity="ERROR",

@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const agriculturalLandDataContainer = document.getElementById('agricultural-land-data');
     const drinkingWaterDataContainer = document.getElementById('drinking-water-data');
     const energyAccessDataContainer = document.getElementById('energy-access-data');
+    const lifeExpectancyDataContainer = document.getElementById('life-expectancy-chart-container');
+    const childMortalityDataContainer = document.getElementById('child-mortality-chart-container');
 
     // Fetch and display data on page load
     if (worldBankDataContainer) {
@@ -23,6 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (energyAccessDataContainer) {
         fetchEnergyAccessData();
+    }
+    if (lifeExpectancyDataContainer) {
+        fetchLifeExpectancyData();
+    }
+    if (childMortalityDataContainer) {
+        fetchChildMortalityData();
     }
 
     if (sendBtn) {
@@ -222,6 +230,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             energyAccessDataContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
+        }
+    }
+
+    async function fetchLifeExpectancyData() {
+        try {
+            const response = await fetch('/api/life_expectancy');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.error) {
+                lifeExpectancyDataContainer.innerHTML = `<p>Error fetching data: ${data.error}</p>`;
+                return;
+            }
+
+            // For now, just display the raw data to inspect the structure
+            let html = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            lifeExpectancyDataContainer.innerHTML = html;
+
+        } catch (error) {
+            lifeExpectancyDataContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
+        }
+    }
+
+    async function fetchChildMortalityData() {
+        try {
+            const response = await fetch('/api/child_mortality');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.error) {
+                childMortalityDataContainer.innerHTML = `<p>Error fetching data: ${data.error}</p>`;
+                return;
+            }
+
+            // For now, just display the raw data to inspect the structure
+            let html = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            childMortalityDataContainer.innerHTML = html;
+
+        } catch (error) {
+            childMortalityDataContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
         }
     }
 });
