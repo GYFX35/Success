@@ -268,9 +268,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // For now, just display the raw data to inspect the structure
-            let html = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-            childMortalityDataContainer.innerHTML = html;
+            if (data.length === 0) {
+                childMortalityDataContainer.innerHTML = `<p>No child mortality data available for the selected criteria.</p>`;
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.id = 'childMortalityChart';
+            childMortalityDataContainer.appendChild(canvas);
+
+            const chart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => `${item.country} (${item.year})`),
+                    datasets: [{
+                        label: 'Child Mortality Rate (per 1,000 live births)',
+                        data: data.map(item => item.value),
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
 
         } catch (error) {
             childMortalityDataContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;

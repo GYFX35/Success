@@ -437,13 +437,58 @@ def child_mortality():
     # UNICEF SDMX API URL for Child Mortality
     # Dataflow: UNICEF,CME,1.0
     # Countries: AFG (Afghanistan), ALB (Albania), DZA (Algeria)
-    url = "https://sdmx.data.unicef.org/ws/public/sdmxapi/rest/data/UNICEF,CME,1.0/AFG+ALB+DZA?format=sdmx-json&human=true"
+    url = "https://sdmx.data.unicef.org/ws/public/sdmxapi/rest/data/UNICEF,CME,1.0/AFG+ALB+DZA?format=sdmx-json"
 
     try:
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
-        return jsonify(data)
+
+        if 'dataSets' not in data or not data['dataSets'] or not data['dataSets'][0].get('observations'):
+            return jsonify([])
+
+        structure = data['structure']
+        dimensions = structure['dimensions']['observation']
+
+        # Find the index of each dimension
+        dim_ids = [d['id'] for d in dimensions]
+        try:
+            country_dim_index = dim_ids.index('REF_AREA')
+            time_dim_index = dim_ids.index('TIME_PERIOD')
+        except ValueError:
+            return jsonify({"error": "Could not find expected dimensions"}), 500
+
+        # Get dimension values
+        country_values = dimensions[country_dim_index]['values']
+        time_values = dimensions[time_dim_index]['values']
+
+        observations = data['dataSets'][0].get('observations', {})
+        formatted_data = []
+
+        for key, value_list in observations.items():
+            indices = [int(i) for i in key.split(':')]
+
+            country_code = country_values[indices[country_dim_index]]['id']
+            country_name = country_values[indices[country_dim_index]]['name']
+            year = time_values[indices[time_dim_index]]['id']
+            value = value_list[0]
+
+            formatted_data.append({
+                'country': country_name,
+                'country_code': country_code,
+                'year': year,
+                'value': value
+            })
+
+        logger.log_struct(
+            {
+                "message": "Successfully fetched and formatted child mortality data.",
+                "component": "backend",
+                "endpoint": "/api/child_mortality",
+            },
+            severity="INFO",
+        )
+        return jsonify(formatted_data)
 
     except requests.exceptions.RequestException as e:
         logger.log_struct(
