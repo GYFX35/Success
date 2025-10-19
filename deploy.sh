@@ -29,30 +29,7 @@ gcloud services enable run.googleapis.com
 gcloud services enable containerregistry.googleapis.com
 
 # Submit the build to Cloud Build
-echo "Building and pushing Docker images..."
+echo "Starting the build and deployment process..."
 gcloud builds submit --config cloudbuild.yaml .
 
-# Deploy backend to Cloud Run
-echo "Deploying backend to Cloud Run..."
-gcloud run deploy backend \
-  --image="gcr.io/$GOOGLE_CLOUD_PROJECT/backend:latest" \
-  --platform=managed \
-  --region=us-central1 \
-  --allow-unauthenticated \
-  --port=8080
-
-# Get the backend URL
-BACKEND_URL=$(gcloud run services describe backend --platform=managed --region=us-central1 --format='value(status.url)')
-
-# Deploy frontend to Cloud Run
-echo "Deploying frontend to Cloud Run..."
-gcloud run deploy frontend \
-  --image="gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:latest" \
-  --platform=managed \
-  --region=us-central1 \
-  --allow-unauthenticated \
-  --port=8080 \
-  --set-env-vars=BACKEND_URL=$BACKEND_URL
-
-echo "Deployment complete."
-echo "Frontend URL: $(gcloud run services describe frontend --platform=managed --region=us-central1 --format='value(status.url)')"
+echo "Cloud Build has been triggered. Monitor the build progress in the Google Cloud Console."
