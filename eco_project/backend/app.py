@@ -8,7 +8,7 @@ class MockLogger:
         pass  # Does nothing
 
 # Conditionally initialize the logger
-if os.environ.get('GAE_ENV') == 'standard':
+if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
     from google.cloud import logging as cloud_logging
     logging_client = cloud_logging.Client()
     log_name = "world-bank-api-logs"
