@@ -1,10 +1,56 @@
 steps:
+# Build the backend image
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'gcr.io/$PROJECT_ID/backend:latest', './eco_project/backend']
+
+# Copy static files to the frontend directory.
 - name: 'ubuntu'
   args: ['cp', '-a', 'eco_project/backend/static/.', 'eco_project/frontend/']
+
+# Build the frontend image
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:latest', './eco_project/frontend']
+
+# Deploy the backend to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - 'run'
+    - 'deploy'
+    - 'backend'
+    - '--image=gcr.io/$PROJECT_ID/backend:latest'
+    - '--platform=managed'
+    - '--region=us-central1'
+    - '--allow-unauthenticated'
+    - '--port=8080'
+    - '--project=$PROJECT_ID'
+
+# Get the backend URL and store it in a file
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      gcloud run services describe backend --platform=managed --region=us-central1 --format='value(status.url)' --project=$PROJECT_ID > /workspace/backend_url.txt
+
+# Deploy the frontend to Cloud Run, using the backend URL
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      BACKEND_URL=$$(cat /workspace/backend_url.txt)
+      gcloud run deploy frontend \
+        --image=gcr.io/$PROJECT_ID/frontend:latest \
+        --platform=managed \
+        --region=us-central1 \
+        --allow-unauthenticated \
+        --port=8080 \
+        --set-env-vars="BACKEND_URL=$$BACKEND_URL" \
+        --project=$PROJECT_ID
+
 images:
 - 'gcr.io/$PROJECT_ID/backend:latest'
 - 'gcr.io/$PROJECT_ID/frontend:latest'
+
+timeout: 1200s

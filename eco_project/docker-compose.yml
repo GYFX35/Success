@@ -5,6 +5,9 @@ services:
     restart: always
     environment:
       - OLLAMA_API_URL=http://host.docker.internal:11434/api/generate
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/gcloud-credentials.json
+    volumes:
+      - ./backend/gcloud-credentials.json:/app/gcloud-credentials.json
   frontend:
     build:
       context: .
