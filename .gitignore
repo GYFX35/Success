@@ -1,2 +1,3 @@
 __pycache__/
 eco_project/backend/gcloud-credentials.json
+server.log

@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, send_from_directory
+from flask_socketio import SocketIO, emit
 import requests
 import os
 
@@ -18,6 +19,7 @@ else:
     logger = MockLogger()
 
 app = Flask(__name__, static_folder='static')
+socketio = SocketIO(app)
 
 @app.route('/')
 def home():
@@ -212,56 +214,6 @@ def agricultural_land():
             severity="ERROR",
         )
         return jsonify({"error": str(e)}), 500
-
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    data = request.get_json()
-    user_message = data.get('message')
-
-    if not user_message:
-        return jsonify({"error": "No message provided."}), 400
-
-    # Get Ollama API URL from environment variable or use default
-    ollama_api_url = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api/generate")
-
-    try:
-        # Prepare the data for the Ollama API
-        ollama_data = {
-            "model": "gemma:2b",
-            "prompt": user_message,
-            "stream": False
-        }
-
-        # Send the request to the Ollama API
-        response = requests.post(ollama_api_url, json=ollama_data)
-        response.raise_for_status()  # Raise an exception for bad status codes
-
-        # Extract the response from Ollama
-        ai_response = response.json().get('response', "I'm sorry, I couldn't generate a response.")
-
-        logger.log_struct(
-            {
-                "message": f"Chat message received: {user_message}",
-                "response": ai_response,
-                "component": "backend",
-                "endpoint": "/api/chat",
-            },
-            severity="INFO",
-        )
-
-        return jsonify({"response": ai_response})
-
-    except requests.exceptions.RequestException as e:
-        logger.log_struct(
-            {
-                "message": f"Error communicating with Ollama API: {e}",
-                "component": "backend",
-                "endpoint": "/api/chat",
-                "url": ollama_api_url,
-            },
-            severity="ERROR",
-        )
-        return jsonify({"error": "Failed to communicate with the AI service."}), 500
 
 @app.route('/api/drinking_water')
 def drinking_water():
@@ -513,6 +465,77 @@ def livestock():
     ]
     return jsonify(mock_data)
 
+@app.route('/api/videos')
+def videos():
+    mock_videos = [
+        {"title": "The Problem with Traditional Agriculture", "url": "https://www.youtube.com/embed/Yp7XFAE8kr4"},
+        {"title": "Agroecology for Sustainable Food Systems", "url": "https://www.youtube.com/embed/6OyGlwYUS5w"},
+        {"title": "How does an organic farmer conserve water?", "url": "https://www.youtube.com/embed/32ZMYDbItQ8"}
+    ]
+    return jsonify(mock_videos)
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    data = request.get_json()
+    user_message = data.get('message')
+
+    if not user_message:
+        return jsonify({"error": "No message provided."}), 400
+
+    # Get Ollama API URL from environment variable or use default
+    ollama_api_url = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api/generate")
+
+    try:
+        # Prepare the data for the Ollama API
+        ollama_data = {
+            "model": "gemma:2b",
+            "prompt": user_message,
+            "stream": False
+        }
+
+        # Send the request to the Ollama API
+        response = requests.post(ollama_api_url, json=ollama_data)
+        response.raise_for_status()  # Raise an exception for bad status codes
+
+        # Extract the response from Ollama
+        ai_response = response.json().get('response', "I'm sorry, I couldn't generate a response.")
+
+        logger.log_struct(
+            {
+                "message": f"Chat message received: {user_message}",
+                "response": ai_response,
+                "component": "backend",
+                "endpoint": "/api/chat",
+            },
+            severity="INFO",
+        )
+
+        return jsonify({"response": ai_response})
+
+    except requests.exceptions.RequestException as e:
+        logger.log_struct(
+            {
+                "message": f"Error communicating with Ollama API: {e}",
+                "component": "backend",
+                "endpoint": "/api/chat",
+                "url": ollama_api_url,
+            },
+            severity="ERROR",
+        )
+        return jsonify({"error": "Failed to communicate with the AI service."}), 500
+
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
+
+@socketio.on('chat_message')
+def handle_chat_message(message):
+    emit('chat_message', message, broadcast=True)
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)
