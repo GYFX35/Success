@@ -465,14 +465,59 @@ def livestock():
     ]
     return jsonify(mock_data)
 
-@app.route('/api/videos')
+import json
+import bleach
+from filelock import FileLock
+
+# Path for the videos JSON file and its lock file
+VIDEOS_FILE = os.path.join(app.root_path, 'videos.json')
+LOCK_FILE = os.path.join(app.root_path, 'videos.json.lock')
+
+@app.route('/api/videos', methods=['GET', 'POST'])
 def videos():
-    mock_videos = [
-        {"title": "The Problem with Traditional Agriculture", "url": "https://www.youtube.com/embed/Yp7XFAE8kr4"},
-        {"title": "Agroecology for Sustainable Food Systems", "url": "https://www.youtube.com/embed/6OyGlwYUS5w"},
-        {"title": "How does an organic farmer conserve water?", "url": "https://www.youtube.com/embed/32ZMYDbItQ8"}
-    ]
-    return jsonify(mock_videos)
+    if request.method == 'POST':
+        # Handle video submission
+        data = request.get_json()
+        title = data.get('title')
+        url = data.get('url')
+
+        if not title or not url:
+            return jsonify({"error": "Title and URL are required."}), 400
+
+        # Sanitize user input
+        sanitized_title = bleach.clean(title)
+        sanitized_url = bleach.clean(url)
+
+        # A simple check to ensure the URL is a YouTube embed URL
+        if not sanitized_url.startswith("https://www.youtube.com/embed/"):
+            return jsonify({"error": "Invalid YouTube URL."}), 400
+
+        with FileLock(LOCK_FILE):
+            # Read existing videos
+            try:
+                with open(VIDEOS_FILE, 'r') as f:
+                    videos = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                videos = []
+
+            # Add new video
+            videos.append({"title": sanitized_title, "url": sanitized_url})
+
+            # Write updated videos list back to the file
+            with open(VIDEOS_FILE, 'w') as f:
+                json.dump(videos, f, indent=4)
+
+        return jsonify({"message": "Video added successfully!"}), 201
+
+    else: # GET request
+        # Return the list of videos
+        with FileLock(LOCK_FILE):
+            try:
+                with open(VIDEOS_FILE, 'r') as f:
+                    videos = json.load(f)
+                return jsonify(videos)
+            except (FileNotFoundError, json.JSONDecodeError):
+                return jsonify([])
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
