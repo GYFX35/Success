@@ -1,3 +1,5 @@
 __pycache__/
 eco_project/backend/gcloud-credentials.json
 server.log
+eco_project/backend/videos.json
+eco_project/backend/videos.json.lock
