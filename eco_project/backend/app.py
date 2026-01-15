@@ -519,6 +519,56 @@ def videos():
             except (FileNotFoundError, json.JSONDecodeError):
                 return jsonify([])
 
+# Path for the drinking water videos JSON file and its lock file
+DRINKING_WATER_VIDEOS_FILE = os.path.join(app.root_path, 'drinking_water_videos.json')
+DRINKING_WATER_LOCK_FILE = os.path.join(app.root_path, 'drinking_water_videos.json.lock')
+
+@app.route('/api/drinking_water_videos', methods=['GET', 'POST'])
+def drinking_water_videos():
+    if request.method == 'POST':
+        # Handle video submission
+        data = request.get_json()
+        title = data.get('title')
+        url = data.get('url')
+
+        if not title or not url:
+            return jsonify({"error": "Title and URL are required."}), 400
+
+        # Sanitize user input
+        sanitized_title = bleach.clean(title)
+        sanitized_url = bleach.clean(url)
+
+        # A simple check to ensure the URL is a YouTube embed URL
+        if not sanitized_url.startswith("https://www.youtube.com/embed/"):
+            return jsonify({"error": "Invalid YouTube URL."}), 400
+
+        with FileLock(DRINKING_WATER_LOCK_FILE):
+            # Read existing videos
+            try:
+                with open(DRINKING_WATER_VIDEOS_FILE, 'r') as f:
+                    videos = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                videos = []
+
+            # Add new video
+            videos.append({"title": sanitized_title, "url": sanitized_url})
+
+            # Write updated videos list back to the file
+            with open(DRINKING_WATER_VIDEOS_FILE, 'w') as f:
+                json.dump(videos, f, indent=4)
+
+        return jsonify({"message": "Video added successfully!"}), 201
+
+    else: # GET request
+        # Return the list of videos
+        with FileLock(DRINKING_WATER_LOCK_FILE):
+            try:
+                with open(DRINKING_WATER_VIDEOS_FILE, 'r') as f:
+                    videos = json.load(f)
+                return jsonify(videos)
+            except (FileNotFoundError, json.JSONDecodeError):
+                return jsonify([])
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     data = request.get_json()
