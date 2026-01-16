@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drinking Water Videos - Environment Protection</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="drinking_water_videos.css">
+</head>
+<body>
+    <header>
+        <h1>Drinking Water Video Gallery</h1>
+        <nav>
+            <a href="index.html">Home</a>
+        </nav>
+    </header>
+    <main>
+        <section id="video-submission">
+            <h2>Share a Video</h2>
+            <form id="video-form">
+                <input type="text" id="video-title" placeholder="Video Title" required>
+                <input type="url" id="video-url" placeholder="Video URL" required>
+                <button type="submit">Share Video</button>
+            </form>
+            <div id="error-message" class="error"></div>
+        </section>
+        <section id="videos">
+            <h2>Featured Videos</h2>
+            <div class="video-container">
+                <!-- Video embeds will go here -->
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Environment Protection Initiative</p>
+    </footer>
+    <script src="drinking_water_videos.js"></script>
+</body>
+</html>
