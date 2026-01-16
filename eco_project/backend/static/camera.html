@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Access - Environment Protection</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="camera.css">
+</head>
+<body>
+    <header>
+        <h1>Camera Access</h1>
+        <nav>
+            <a href="index.html">Home</a>
+        </nav>
+    </header>
+    <main>
+        <section id="camera-container">
+            <video id="camera-stream" autoplay playsinline></video>
+            <div id="camera-controls">
+                <button id="capture-photo">Capture Photo</button>
+                <button id="start-video">Start Recording</button>
+                <button id="stop-video" disabled>Stop Recording</button>
+            </div>
+        </section>
+        <section id="gallery">
+            <h2>Gallery</h2>
+            <div id="gallery-container">
+                <!-- Captured photos and videos will be displayed here -->
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Environment Protection Initiative</p>
+    </footer>
+    <script src="camera.js"></script>
+</body>
+</html>
