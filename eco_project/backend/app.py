@@ -627,6 +627,32 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
+    if 'media' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['media']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    if file:
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(UPLOAD_FOLDER, filename))
+        return jsonify({"message": "File uploaded successfully"}), 201
+
+@app.route('/api/gallery')
+def gallery():
+    files = os.listdir(UPLOAD_FOLDER)
+    return jsonify(files)
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
 @socketio.on('chat_message')
 def handle_chat_message(message):
     emit('chat_message', message, broadcast=True)
