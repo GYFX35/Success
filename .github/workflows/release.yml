@@ -44,10 +44,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Copy static files to frontend
+        run: cp -a eco_project/backend/static/. eco_project/frontend/
+
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./eco_project/frontend
           file: ./eco_project/frontend/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/eco-frontend:${{ github.ref_name }}
