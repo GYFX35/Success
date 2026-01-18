@@ -657,6 +657,38 @@ def uploaded_file(filename):
 def handle_chat_message(message):
     emit('chat_message', message, broadcast=True)
 
+
+from googleapiclient.discovery import build
+
+@app.route('/api/youtube_videos')
+def youtube_videos():
+    youtube_api_key = os.environ.get('YOUTUBE_API_KEY')
+    if not youtube_api_key:
+        return jsonify({"error": "YouTube API key is not configured."}), 500
+
+    try:
+        youtube = build('youtube', 'v3', developerKey=youtube_api_key)
+
+        search_response = youtube.search().list(
+            q="environmental protection",
+            part="snippet",
+            maxResults=10,
+            type="video"
+        ).execute()
+
+        videos = []
+        for search_result in search_response.get("items", []):
+            videos.append({
+                "title": search_result["snippet"]["title"],
+                "video_id": search_result["id"]["videoId"]
+            })
+
+        return jsonify(videos)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)
