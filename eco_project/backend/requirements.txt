@@ -3,3 +3,4 @@ requests
 gunicorn
 google-cloud-logging
 Flask-SocketIO
+google-api-python-client
