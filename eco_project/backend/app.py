@@ -465,6 +465,45 @@ def livestock():
     ]
     return jsonify(mock_data)
 
+@app.route('/api/air_quality')
+def air_quality():
+    openaq_api_key = os.environ.get('OPENAQ_API_KEY')
+    if not openaq_api_key:
+        return jsonify({"error": "OpenAQ API key is not configured."}), 500
+
+    cities = ["New York", "Los Angeles", "Chicago", "Houston"]
+    url = "https://api.openaq.org/v3/latest"
+    headers = {"X-API-Key": openaq_api_key}
+    params = {"city": cities, "limit": 100}
+
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        formatted_data = []
+        if data and data.get('results'):
+            processed_cities = set()
+            for result in data['results']:
+                city_name = result.get('city')
+                if city_name and city_name in cities and city_name not in processed_cities:
+                    measurement = next((m for m in result.get('measurements', []) if m.get('parameter') == 'pm25'), None)
+                    if not measurement and result.get('measurements'):
+                        measurement = result['measurements'][0]
+
+                    if measurement:
+                        formatted_data.append({
+                            "city": city_name,
+                            "aqi": measurement.get('value'),
+                            "pollutant": measurement.get('parameter')
+                        })
+                        processed_cities.add(city_name)
+
+        return jsonify(formatted_data)
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
 import json
 import bleach
 from filelock import FileLock

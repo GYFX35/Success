@@ -1,0 +1,11 @@
+#data-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.data-item {
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 5px;
+}
