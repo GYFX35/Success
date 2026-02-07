@@ -728,6 +728,108 @@ def youtube_videos():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/unep_recycling')
+def unep_recycling():
+    # SDG Indicator 12.5.1: National recycling rate
+    # Series: EN_MWT_RCYR (Proportion of municipal waste recycled (%))
+    # UNEP is the custodian of this indicator.
+    url = "https://unstats.un.org/SDGAPI/v1/sdg/Series/Data?seriesCode=EN_MWT_RCYR&pageSize=1000"
+
+    try:
+        response = requests.get(url, timeout=10)
+        data = response.json()
+
+        if data and data.get('data'):
+            latest_data = {}
+            for entry in data['data']:
+                country = entry['geoAreaName']
+                year = entry['timePeriodStart']
+                value = entry['value']
+
+                if value is not None and (country not in latest_data or year > latest_data[country]['year']):
+                    latest_data[country] = {
+                        'country': country,
+                        'year': int(year),
+                        'value': float(value)
+                    }
+
+            # Top 10 countries
+            formatted_data = sorted(latest_data.values(), key=lambda x: x['value'], reverse=True)[:10]
+
+            logger.log_struct(
+                {
+                    "message": "Successfully fetched UNEP recycling data.",
+                    "component": "backend",
+                    "endpoint": "/api/unep_recycling",
+                },
+                severity="INFO",
+            )
+            return jsonify(formatted_data)
+        else:
+            return jsonify({"error": "No data found"}), 404
+    except Exception as e:
+        logger.log_struct(
+            {
+                "message": f"Error fetching UNEP data: {e}",
+                "component": "backend",
+                "endpoint": "/api/unep_recycling",
+            },
+            severity="ERROR",
+        )
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/unep_protected_areas')
+def unep_protected_areas():
+    # SDG Indicator 15.1.2: Protected areas
+    # Series: ER_PTD_TERR (Average proportion of Terrestrial KBAs covered by protected areas (%))
+    # UNEP is the custodian of this indicator.
+    url = "https://unstats.un.org/SDGAPI/v1/sdg/Series/Data?seriesCode=ER_PTD_TERR&pageSize=1000"
+
+    try:
+        response = requests.get(url, timeout=10)
+        data = response.json()
+
+        if data and data.get('data'):
+            latest_data = {}
+            for entry in data['data']:
+                country = entry['geoAreaName']
+                year = entry['timePeriodStart']
+                value = entry['value']
+
+                if value is not None and (country not in latest_data or year > latest_data[country]['year']):
+                    latest_data[country] = {
+                        'country': country,
+                        'year': int(year),
+                        'value': float(value)
+                    }
+
+            # Top 10 countries
+            formatted_data = sorted(latest_data.values(), key=lambda x: x['value'], reverse=True)[:10]
+
+            logger.log_struct(
+                {
+                    "message": "Successfully fetched UNEP protected areas data.",
+                    "component": "backend",
+                    "endpoint": "/api/unep_protected_areas",
+                },
+                severity="INFO",
+            )
+            return jsonify(formatted_data)
+        else:
+            return jsonify({"error": "No data found"}), 404
+    except Exception as e:
+        logger.log_struct(
+            {
+                "message": f"Error fetching UNEP data: {e}",
+                "component": "backend",
+                "endpoint": "/api/unep_protected_areas",
+            },
+            severity="ERROR",
+        )
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)

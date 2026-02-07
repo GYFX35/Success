@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNEP Data - Environment Protection</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="unep.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>UN Environment Programme (UNEP) Data</h1>
+        <nav>
+            <a href="index.html">Home</a>
+        </nav>
+    </header>
+    <main>
+        <section id="unep-intro">
+            <h2>UNEP and the SDGs</h2>
+            <p>The United Nations Environment Programme (UNEP) is the leading global authority on the environment. It is the custodian for many Sustainable Development Goal (SDG) indicators. Below is data for two key indicators custodianed by UNEP.</p>
+        </section>
+
+        <section id="recycling-data">
+            <h2>National Recycling Rate (SDG 12.5.1)</h2>
+            <p>Proportion of municipal waste recycled (%) - Top 10 Countries</p>
+            <canvas id="recyclingChart"></canvas>
+        </section>
+
+        <section id="protected-areas-data">
+            <h2>Protected Areas (SDG 15.1.2)</h2>
+            <p>Average proportion of Terrestrial Key Biodiversity Areas (KBAs) covered by protected areas (%) - Top 10 Countries</p>
+            <canvas id="protectedAreasChart"></canvas>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Environment Protection Initiative</p>
+    </footer>
+    <script src="unep.js"></script>
+</body>
+</html>
